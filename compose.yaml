@@ -1,0 +1,36 @@
+version: '3.9'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: paymedrive-backend
+    ports:
+      - "3000:3000"
+    volumes:
+      # Hot-reload for development
+      - ./server:/app
+      - /app/node_modules
+      # Persistent storage
+      - ./data:/app/data
+      - ./bucket:/app/bucket
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - DB_PATH=/app/data/database.sqlite
+      - BUCKET_PATH=/app/bucket
+    env_file:
+      - ./server/.env
+    command: npm run dev
+    restart: unless-stopped
+    networks:
+      - paymedrive-network
+
+networks:
+  paymedrive-network:
+    driver: bridge
+
+volumes:
+  data:
+  bucket:
