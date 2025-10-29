@@ -24,8 +24,14 @@ export const initializeDatabase = async (): Promise<void> => {
     await sequelize.authenticate();
     logger.info('Database connection established successfully');
     
-    // Will sync models in Phase 2
-    // await sequelize.sync({ alter: process.env.NODE_ENV === 'development' });
+    const { initializeModels } = await import('../models');
+    initializeModels();
+    
+    await sequelize.sync({ alter: process.env.NODE_ENV === 'development' });
+    logger.info('Database models synchronized');
+    
+    const { seedSubscriptions } = await import('../seeders/subscription-seeder');
+    await seedSubscriptions();
     
   } catch (error) {
     logger.error('Unable to connect to database:', error);

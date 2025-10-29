@@ -1,25 +1,24 @@
 import { DataTypes, Model } from 'sequelize';
 import { getSequelize } from '../clients/db';
 
-interface UserSubscriptionAttributes {
+interface UserFilesAttributes {
   userId: string;
-  subscriptionId: string;
+  fileId: string;
 }
 
-export class UserSubscription extends Model<UserSubscriptionAttributes> implements UserSubscriptionAttributes {
+export class UserFiles extends Model<UserFilesAttributes> implements UserFilesAttributes {
   declare userId: string;
-  declare subscriptionId: string;
+  declare fileId: string;
 }
 
-export const initUserSubscriptionModel = () => {
+export const initUserFilesModel = () => {
   const sequelize = getSequelize();
 
-  UserSubscription.init(
+  UserFiles.init(
     {
       userId: {
         type: DataTypes.UUID,
         allowNull: false,
-        unique: true,
         references: {
           model: 'users',
           key: 'id',
@@ -27,11 +26,11 @@ export const initUserSubscriptionModel = () => {
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
       },
-      subscriptionId: {
+      fileId: {
         type: DataTypes.UUID,
         allowNull: false,
         references: {
-          model: 'subscriptions',
+          model: 'files',
           key: 'id',
         },
         onDelete: 'CASCADE',
@@ -40,10 +39,10 @@ export const initUserSubscriptionModel = () => {
     },
     {
       sequelize,
-      tableName: 'user_subscription',
+      tableName: 'user_files',
       timestamps: false,
     }
   );
 
-  return UserSubscription;
+  return UserFiles;
 };
