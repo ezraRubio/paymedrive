@@ -1,5 +1,5 @@
 import { UserRepository } from '../repositories/user.repository';
-import { SubscriptionService } from '../services/subscription.service';
+import { SubscriptionService } from '../repositories/subscription.repository';
 import { UserTier } from '../models/user.model';
 
 const userRepo = new UserRepository();
@@ -93,12 +93,3 @@ export const getRemainingQuota = async (userId: string): Promise<QuotaInfo> => {
   };
 };
 
-export const formatBytes = (bytes: number): string => {
-  if (bytes === 0) return '0 Bytes';
-
-  const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
-};

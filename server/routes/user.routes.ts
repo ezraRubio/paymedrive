@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { AuthService } from '../services/auth.service';
 import { UserService } from '../services/user.service';
-import { SubscriptionManagerService } from '../services/subscription-manager.service';
+import { SubscriptionManagerService } from '../services/subscription.service';
 import {
   initiateAuthSchema,
   verifyOTPSchema,

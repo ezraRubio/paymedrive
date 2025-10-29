@@ -84,7 +84,8 @@ export const SubscriptionScreen: React.FC = () => {
     }
   };
 
-  const formatBytes = (bytes: number): string => {
+  const formatBytes = (bytes: number | null): string => {
+    if (bytes === null) return 'Unlimited';
     if (bytes === 0) return '0 B';
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
@@ -183,7 +184,7 @@ export const SubscriptionScreen: React.FC = () => {
                   <View style={styles.feature}>
                     <Text variant="bodyLarge">Files:</Text>
                     <Text variant="bodyLarge" style={styles.featureValue}>
-                      {tier.limitItems}
+                      {tier.limitItems ?? 'Unlimited'}
                     </Text>
                   </View>
                   {tier.tier === 'unlimited' && (

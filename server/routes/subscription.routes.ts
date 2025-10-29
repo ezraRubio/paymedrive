@@ -1,6 +1,6 @@
 import { authenticate } from "../middleware/auth.middleware";
 import { ApiError } from "../middleware/error-handler";
-import { SubscriptionManagerService } from "../services/subscription-manager.service";
+import { SubscriptionManagerService } from "../services/subscription.service";
 import { ExtendedRequest } from "../types/extended.request";
 import { upgradeTierSchema, validate } from "../utils/validations/user.validation";
 import { Router, Request, Response, NextFunction } from "express";

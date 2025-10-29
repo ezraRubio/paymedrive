@@ -1,5 +1,5 @@
 import { UserRepository } from '../repositories/user.repository';
-import { SubscriptionService } from '../services/subscription.service';
+import { SubscriptionService } from '../repositories/subscription.repository';
 import { generateOTP, storeOTP, TEST_EMAIL, TEST_OTP, verifyOTP } from '../utils/otp.util';
 import { generateToken } from '../utils/jwt.util';
 import { sendOTPEmail } from '../clients/email.handler';

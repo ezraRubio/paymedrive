@@ -5,8 +5,8 @@ export interface SubscriptionTier {
   price: number;
   currency: string;
   billingPeriod: string;
-  limitSize: number;
-  limitItems: number;
+  limitSize: number | null;
+  limitItems: number | null;
 }
 
 export const subscriptionAPI = {
