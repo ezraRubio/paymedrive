@@ -174,6 +174,33 @@ export const HomeScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
           </Card.Actions>
         </Card>
 
+        <Card style={styles.card}>
+          <Card.Title title="Account" />
+          <Card.Content>
+            <Text variant="bodyMedium">
+              Manage your profile, view subscription plans, and account settings
+            </Text>
+          </Card.Content>
+          <Card.Actions style={styles.accountActions}>
+            <Button
+              mode="outlined"
+              onPress={() => navigation.navigate('Profile')}
+              icon="account"
+              style={styles.accountButton}
+            >
+              Profile
+            </Button>
+            <Button
+              mode="outlined"
+              onPress={() => navigation.navigate('Subscription')}
+              icon="crown"
+              style={styles.accountButton}
+            >
+              Plans
+            </Button>
+          </Card.Actions>
+        </Card>
+
         {user?.tier === 'free' && (
           <Card style={[styles.card, styles.upgradeCard]}>
             <Card.Content>
@@ -265,5 +292,12 @@ const styles = StyleSheet.create({
   },
   upgradeText: {
     marginBottom: 8,
+  },
+  accountActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  accountButton: {
+    flex: 1,
   },
 });
