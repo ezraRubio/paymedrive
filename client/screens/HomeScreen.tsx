@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import {
   Card,
@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Chip,
 } from 'react-native-paper';
+import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { userAPI } from '../api/users';
 import { filesAPI } from '../api/files';
@@ -32,9 +33,11 @@ export const HomeScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     isUnlimited: false,
   });
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [])
+  );
 
   const loadData = async () => {
     try {
