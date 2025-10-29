@@ -3,6 +3,11 @@
 > "You get a **free** drive...if you pay me!"
 
 A file management/backup system with a tier-based subscription model.
+Refer to `paymedrive.md` for non-ai information on system architecture.
+`pmd_architecture.png` shows the user flow on the system.
+See `plan.md` for detailed development plan, and `prompt_history.md`
+for the chat history with cascade (agentic claude sonnet).
+Use test@example.com 123456 for testing.
 
 ## 📋 Features
 
@@ -208,19 +213,6 @@ Key variables:
 - `DB_PATH` - SQLite database location
 - `BUCKET_PATH` - File storage directory
 
-## 📈 Development Status
-
-✅ Phase 1: Project Foundation & Infrastructure Setup (COMPLETE)
-⏳ Phase 2: Database Models & Migrations (PENDING)
-⏳ Phase 3: Authentication System (PENDING)
-⏳ Phase 4: User Management (PENDING)
-⏳ Phase 5: File Management (PENDING)
-⏳ Phase 6: Testing & Documentation (PENDING)
-⏳ Phase 7: Client Application (PENDING)
-⏳ Phase 8: Integration Testing (PENDING)
-
-See `plan.md` for detailed development plan.
-
 ## 🤝 Contributing
 
 1. Follow the existing code structure
@@ -231,7 +223,3 @@ See `plan.md` for detailed development plan.
 ## 📄 License
 
 MIT
-
-## 👥 Support
-
-For issues and questions, please open a GitHub issue.
