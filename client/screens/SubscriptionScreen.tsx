@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import {
   Card,
   Text,
@@ -7,6 +7,9 @@ import {
   ActivityIndicator,
   Chip,
   Divider,
+  Portal,
+  Dialog,
+  Snackbar,
 } from 'react-native-paper';
 import { useAuth } from '../context/AuthContext';
 import { subscriptionAPI, SubscriptionTier } from '../api/subscription';
@@ -17,6 +20,10 @@ export const SubscriptionScreen: React.FC = () => {
   const [tiers, setTiers] = useState<SubscriptionTier[]>([]);
   const [loading, setLoading] = useState(true);
   const [upgrading, setUpgrading] = useState<string | null>(null);
+  const [upgradeDialogVisible, setUpgradeDialogVisible] = useState(false);
+  const [selectedTier, setSelectedTier] = useState<SubscriptionTier | null>(null);
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
 
   useEffect(() => {
     loadTiers();
@@ -35,48 +42,46 @@ export const SubscriptionScreen: React.FC = () => {
     }
   };
 
+  const showSnackbar = (message: string) => {
+    setSnackbarMessage(message);
+    setSnackbarVisible(true);
+  };
+
   const handleUpgrade = (tier: SubscriptionTier) => {
     if (tier.tier === user?.tier) {
-      Alert.alert('Current Plan', 'You are already on this plan');
+      showSnackbar('You are already on this plan');
       return;
     }
 
-    Alert.alert(
-      'Upgrade Subscription',
-      `Upgrade to ${tier.tier.toUpperCase()} for $${tier.price}${
-        tier.billingPeriod !== 'lifetime' ? `/${tier.billingPeriod}` : ''
-      }?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Upgrade',
-          onPress: async () => {
-            setUpgrading(tier.tier);
-            try {
-              const response = await subscriptionAPI.upgradeTier(tier.tier);
-              if (response.success) {
-                const profileRes = await userAPI.getProfile();
-                if (profileRes.success) {
-                  updateUser(profileRes.user);
-                }
-                Alert.alert(
-                  'Success',
-                  response.message || 'Subscription upgraded successfully'
-                );
-              }
-            } catch (error: any) {
-              Alert.alert(
-                'Error',
-                error.response?.data?.message ||
-                  'Failed to upgrade subscription'
-              );
-            } finally {
-              setUpgrading(null);
-            }
-          },
-        },
-      ]
-    );
+    setSelectedTier(tier);
+    setUpgradeDialogVisible(true);
+  };
+
+  const confirmUpgrade = async () => {
+    if (!selectedTier) return;
+
+    setUpgrading(selectedTier.tier);
+    setUpgradeDialogVisible(false);
+
+    try {
+      const response = await subscriptionAPI.upgradeTier(selectedTier.tier);
+      if (response.success) {
+        const profileRes = await userAPI.getProfile();
+        if (profileRes.success) {
+          updateUser(profileRes.user);
+        }
+        showSnackbar(
+          response.message || 'Subscription upgraded successfully'
+        );
+      }
+    } catch (error: any) {
+      showSnackbar(
+        error.response?.data?.message || 'Failed to upgrade subscription'
+      );
+    } finally {
+      setUpgrading(null);
+      setSelectedTier(null);
+    }
   };
 
   const formatBytes = (bytes: number): string => {
@@ -206,6 +211,49 @@ export const SubscriptionScreen: React.FC = () => {
           );
         })}
       </View>
+
+      <Portal>
+        <Dialog
+          visible={upgradeDialogVisible}
+          onDismiss={() => {
+            setUpgradeDialogVisible(false);
+            setSelectedTier(null);
+          }}
+        >
+          <Dialog.Title>Upgrade Subscription</Dialog.Title>
+          <Dialog.Content>
+            <Text variant="bodyMedium">
+              {selectedTier &&
+                `Upgrade to ${selectedTier.tier.toUpperCase()} for $${selectedTier.price}${
+                  selectedTier.billingPeriod !== 'lifetime'
+                    ? `/${selectedTier.billingPeriod}`
+                    : ''
+                }?`}
+            </Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button
+              onPress={() => {
+                setUpgradeDialogVisible(false);
+                setSelectedTier(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button onPress={confirmUpgrade} textColor="#6200ee">
+              Upgrade
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+
+      <Snackbar
+        visible={snackbarVisible}
+        onDismiss={() => setSnackbarVisible(false)}
+        duration={3000}
+      >
+        {snackbarMessage}
+      </Snackbar>
     </ScrollView>
   );
 };

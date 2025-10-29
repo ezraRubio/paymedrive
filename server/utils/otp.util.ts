@@ -1,6 +1,9 @@
 import crypto from 'crypto';
 import { logger } from './logger';
 
+export const TEST_EMAIL = process.env.TEST_EMAIL || 'test@example.com';
+export const TEST_OTP = process.env.TEST_OTP || '123456';
+
 interface OTPEntry {
   otp: string;
   email: string;

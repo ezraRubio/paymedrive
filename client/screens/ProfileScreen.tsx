@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import {
   Card,
   Text,
@@ -9,6 +9,7 @@ import {
   Divider,
   Dialog,
   Portal,
+  Snackbar,
 } from 'react-native-paper';
 import { useAuth } from '../context/AuthContext';
 import { userAPI } from '../api/users';
@@ -17,12 +18,20 @@ export const ProfileScreen: React.FC = () => {
   const { user, logout, updateUser } = useAuth();
   const [editDialogVisible, setEditDialogVisible] = useState(false);
   const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
+  const [logoutDialogVisible, setLogoutDialogVisible] = useState(false);
   const [name, setName] = useState(user?.name || '');
   const [saving, setSaving] = useState(false);
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+
+  const showSnackbar = (message: string) => {
+    setSnackbarMessage(message);
+    setSnackbarVisible(true);
+  };
 
   const handleSaveProfile = async () => {
     if (!name.trim()) {
-      Alert.alert('Error', 'Name cannot be empty');
+      showSnackbar('Name cannot be empty');
       return;
     }
 
@@ -32,11 +41,10 @@ export const ProfileScreen: React.FC = () => {
       if (response.success) {
         updateUser(response.user);
         setEditDialogVisible(false);
-        Alert.alert('Success', 'Profile updated successfully');
+        showSnackbar('Profile updated successfully');
       }
     } catch (error: any) {
-      Alert.alert(
-        'Error',
+      showSnackbar(
         error.response?.data?.message || 'Failed to update profile'
       );
     } finally {
@@ -47,30 +55,24 @@ export const ProfileScreen: React.FC = () => {
   const handleDeleteAccount = async () => {
     try {
       await userAPI.deleteAccount();
-      Alert.alert('Account Deleted', 'Your account has been deleted', [
-        {
-          text: 'OK',
-          onPress: () => logout(),
-        },
-      ]);
+      setDeleteDialogVisible(false);
+      showSnackbar('Account deleted successfully');
+      setTimeout(() => logout(), 1500);
     } catch (error: any) {
-      Alert.alert(
-        'Error',
+      setDeleteDialogVisible(false);
+      showSnackbar(
         error.response?.data?.message || 'Failed to delete account'
       );
     }
-    setDeleteDialogVisible(false);
   };
 
   const handleLogout = () => {
-    Alert.alert('Logout', 'Are you sure you want to logout?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Logout',
-        style: 'destructive',
-        onPress: () => logout(),
-      },
-    ]);
+    setLogoutDialogVisible(true);
+  };
+
+  const confirmLogout = () => {
+    setLogoutDialogVisible(false);
+    logout();
   };
 
   return (
@@ -193,7 +195,35 @@ export const ProfileScreen: React.FC = () => {
             </Button>
           </Dialog.Actions>
         </Dialog>
+
+        <Dialog
+          visible={logoutDialogVisible}
+          onDismiss={() => setLogoutDialogVisible(false)}
+        >
+          <Dialog.Title>Logout</Dialog.Title>
+          <Dialog.Content>
+            <Text variant="bodyMedium">
+              Are you sure you want to logout?
+            </Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setLogoutDialogVisible(false)}>
+              Cancel
+            </Button>
+            <Button onPress={confirmLogout} textColor="#6200ee">
+              Logout
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
       </Portal>
+
+      <Snackbar
+        visible={snackbarVisible}
+        onDismiss={() => setSnackbarVisible(false)}
+        duration={3000}
+      >
+        {snackbarMessage}
+      </Snackbar>
     </ScrollView>
   );
 };
