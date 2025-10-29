@@ -25,7 +25,7 @@ export class UserService {
         createdAt: user.createdAt,
         quota: {
           used: quota.used,
-          limit: quota.limit,
+          limits: quota.limit,
           remaining: quota.remaining,
           isUnlimited: quota.isUnlimited,
         },

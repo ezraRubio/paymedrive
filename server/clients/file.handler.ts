@@ -12,6 +12,7 @@ const fileFilter = (
   file: Express.Multer.File,
   cb: multer.FileFilterCallback
 ) => {
+  console.log(_req, file)
   const sanitized = sanitizeFilename(file.originalname);
   file.originalname = sanitized;
 

@@ -20,10 +20,16 @@ export const HomeScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     totalFiles: 0,
     totalSize: 0,
   });
-  const [quota, setQuota] = useState({
+  const [quota, setQuota] = useState<{
+    used: { size: number; items: number };
+    remaining: { size: number | null; items: number | null };
+    limits: { size: number | null; items: number | null };
+    isUnlimited: boolean;
+  }>({
     used: { size: 0, items: 0 },
     remaining: { size: 0, items: 0 },
     limits: { size: 0, items: 0 },
+    isUnlimited: false,
   });
 
   useEffect(() => {
@@ -58,7 +64,8 @@ export const HomeScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     loadData();
   };
 
-  const formatBytes = (bytes: number): string => {
+  const formatBytes = (bytes: number | null | undefined): string => {
+    if (bytes === null || bytes === undefined) return 'Unlimited';
     if (bytes === 0) return '0 B';
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
@@ -66,7 +73,7 @@ export const HomeScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
   };
 
-  const storagePercentage = quota?.limits?.size > 0
+  const storagePercentage = quota?.limits?.size && quota?.limits?.size > 0
     ? (quota.used.size / quota.limits.size)
     : 0;
 
@@ -114,17 +121,25 @@ export const HomeScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
               <Text variant="bodyLarge">
                 {formatBytes(quota?.used?.size)} of {formatBytes(quota?.limits?.size)}
               </Text>
-              <Text variant="bodySmall" style={styles.percentage}>
-                {(storagePercentage * 100).toFixed(1)}% used
-              </Text>
+              {quota?.isUnlimited ? (
+                <Text variant="bodySmall" style={styles.percentage}>
+                  Unlimited Storage
+                </Text>
+              ) : (
+                <Text variant="bodySmall" style={styles.percentage}>
+                  {(storagePercentage * 100).toFixed(1)}% used
+                </Text>
+              )}
             </View>
-            <ProgressBar
-              progress={storagePercentage}
-              color={storagePercentage > 0.9 ? '#ff0000' : '#6200ee'}
-              style={styles.progressBar}
-            />
+            {!quota?.isUnlimited && (
+              <ProgressBar
+                progress={storagePercentage}
+                color={storagePercentage > 0.9 ? '#ff0000' : '#6200ee'}
+                style={styles.progressBar}
+              />
+            )}
             <Text variant="bodySmall" style={styles.remaining}>
-              {formatBytes(quota?.remaining?.size)} remaining
+              {quota?.isUnlimited ? 'No limits' : `${formatBytes(quota?.remaining?.size)} remaining`}
             </Text>
           </Card.Content>
         </Card>
@@ -139,7 +154,7 @@ export const HomeScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
               </View>
               <View style={styles.statItem}>
                 <Text variant="displaySmall">
-                  {quota?.used?.items}/{quota?.limits?.items}
+                  {quota?.used?.items}/{quota?.limits?.items ?? '∞'}
                 </Text>
                 <Text variant="bodySmall">Files Used</Text>
               </View>

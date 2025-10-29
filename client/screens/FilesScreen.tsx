@@ -73,17 +73,18 @@ export const FilesScreen: React.FC = () => {
 
       if (result.canceled) return;
 
-      const file = result.assets[0];
+      const file = result.assets[0].file;
+      if (!file) return;
       setUploading(true);
 
-      const response = await filesAPI.uploadFile(file.uri, file.name);
+      const response = await filesAPI.uploadFile(file);
       if (response.success) {
         showSnackbar('File uploaded successfully');
         loadFiles();
       }
     } catch (error: any) {
       showSnackbar(
-        error.response?.data?.message || 'Failed to upload file'
+        error.response?.data?.error || 'Failed to upload'
       );
     } finally {
       setUploading(false);

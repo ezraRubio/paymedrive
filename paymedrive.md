@@ -12,19 +12,28 @@ File management/backup system with tier based subscription model:
 
 ## API spec
 
+**Authentication**
+POST /auth -> Initiates user login/signup (sends OTP to email)
+POST /otp -> Completes user login/signup with OTP (creates user if new)
+POST /logout -> Logs out user and invalidates token
+
 **Users**
-GET /users -> Returns user info of the userId in idToken
-POST /users -> Creates and return new user
+GET /users -> Returns user profile for userId in idToken
+PUT /users -> Updates user profile (name)
 DELETE /users -> Mark deleted in db for userId in idToken
-POST /subscribe -> Updates user subscription after validating payment
-POST /auth -> Initiates user login/signup/signout
-POST /otp -> Completes user login/signup/signout
+GET /users/stats -> Returns user statistics (files count, total size, etc.)
+GET /users/quota -> Returns quota compliance status and usage
 
 **Files**
 GET /files -> Returns all files for userId in idToken
-GET /file -> Returns file info by id, after validating is the users'
-POST /file -> uploads file for userId in idToken
-DELETE file -> Deletes file, after validating is the users'
+GET /file -> Downloads file by id, after validating ownership
+GET /file/metadata -> Returns file metadata by id, after validating ownership
+POST /file -> Uploads file for userId in idToken
+DELETE /file -> Deletes file by id, after validating ownership
+
+**Subscriptions**
+GET /subscription/tiers -> Returns available subscription tiers with pricing
+POST /subscription/upgrade -> Updates user subscription tier after validation
 
 ### Entities
 

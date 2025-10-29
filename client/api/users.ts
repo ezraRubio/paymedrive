@@ -12,13 +12,14 @@ export interface User {
       items: number;
     };
     remaining: {
-      size: number;
-      items: number;
+      size: number | null;
+      items: number | null;
     };
     limits: {
-      size: number;
-      items: number;
+      size: number | null;
+      items: number | null;
     };
+    isUnlimited: boolean;
   };
 }
 

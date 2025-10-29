@@ -21,16 +21,13 @@ export const filesAPI = {
   },
 
   uploadFile: async (
-    fileUri: string,
-    fileName: string
+    file: File,
+    // fileUri: string,
+    // fileName: string
   ): Promise<{ success: boolean; file: FileMetadata }> => {
     const formData = new FormData();
     
-    formData.append('file', {
-      uri: fileUri,
-      name: fileName,
-      type: 'application/octet-stream',
-    } as any);
+    formData.append('file', file as any);
 
     const response = await apiClient.post('/file', formData, {
       headers: {
