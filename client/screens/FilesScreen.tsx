@@ -4,7 +4,6 @@ import {
   StyleSheet,
   FlatList,
   RefreshControl,
-  Alert,
   Platform,
 } from 'react-native';
 import {
@@ -15,6 +14,9 @@ import {
   IconButton,
   Searchbar,
   Snackbar,
+  Portal,
+  Dialog,
+  Button,
 } from 'react-native-paper';
 import * as DocumentPicker from 'expo-document-picker';
 import * as Sharing from 'expo-sharing';
@@ -29,6 +31,8 @@ export const FilesScreen: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
+  const [fileToDelete, setFileToDelete] = useState<FileMetadata | null>(null);
 
   useEffect(() => {
     loadFiles();
@@ -115,28 +119,30 @@ export const FilesScreen: React.FC = () => {
   };
 
   const handleDelete = (file: FileMetadata) => {
-    Alert.alert(
-      'Delete File',
-      `Are you sure you want to delete "${file.name}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await filesAPI.deleteFile(file.id);
-              showSnackbar('File deleted');
-              loadFiles();
-            } catch (error: any) {
-              showSnackbar(
-                error.response?.data?.message || 'Failed to delete file'
-              );
-            }
-          },
-        },
-      ]
-    );
+    setFileToDelete(file);
+    setDeleteDialogVisible(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!fileToDelete) return;
+
+    try {
+      await filesAPI.deleteFile(fileToDelete.id);
+      showSnackbar(`"${fileToDelete.name}" deleted successfully`);
+      loadFiles();
+    } catch (error: any) {
+      showSnackbar(
+        error.response?.data?.message || 'Failed to delete file'
+      );
+    } finally {
+      setDeleteDialogVisible(false);
+      setFileToDelete(null);
+    }
+  };
+
+  const cancelDelete = () => {
+    setDeleteDialogVisible(false);
+    setFileToDelete(null);
   };
 
   const showSnackbar = (message: string) => {
@@ -249,6 +255,24 @@ export const FilesScreen: React.FC = () => {
       >
         {snackbarMessage}
       </Snackbar>
+
+      <Portal>
+        <Dialog visible={deleteDialogVisible} onDismiss={cancelDelete}>
+          <Dialog.Title>Delete File</Dialog.Title>
+          <Dialog.Content>
+            <Text variant="bodyMedium">
+              Are you sure you want to delete "{fileToDelete?.name}"? This
+              action cannot be undone.
+            </Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={cancelDelete}>Cancel</Button>
+            <Button onPress={confirmDelete} textColor="#d32f2f">
+              Delete
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </View>
   );
 };
