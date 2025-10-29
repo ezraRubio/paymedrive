@@ -1,4 +1,4 @@
-import { UserRepository } from './repository';
+import { UserRepository } from '../repositories/user.repository';
 import { SubscriptionService } from '../services/subscription.service';
 import { generateOTP, storeOTP, verifyOTP } from '../utils/otp.util';
 import { generateToken } from '../utils/jwt.util';

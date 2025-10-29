@@ -34,7 +34,7 @@ const swaggerOptions = {
       },
     ],
   },
-  apis: ['./users/routes.ts', './files/routes.ts'],
+  apis: ['./routes/*.routes.ts'],
 };
 
 export const setupSwagger = (app: Application) => {

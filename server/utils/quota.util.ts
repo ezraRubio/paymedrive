@@ -1,4 +1,4 @@
-import { UserRepository } from '../users/repository';
+import { UserRepository } from '../repositories/user.repository';
 import { SubscriptionService } from '../services/subscription.service';
 import { UserTier } from '../models/user.model';
 
