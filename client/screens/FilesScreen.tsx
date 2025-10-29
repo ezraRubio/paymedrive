@@ -5,6 +5,7 @@ import {
   FlatList,
   RefreshControl,
   Alert,
+  Platform,
 } from 'react-native';
 import {
   FAB,
@@ -93,15 +94,20 @@ export const FilesScreen: React.FC = () => {
 
   const handleDownload = async (file: FileMetadata) => {
     try {
-      const { localUri } = await filesAPI.downloadFile(file.id);
-      const canShare = await Sharing.isAvailableAsync();
-
-      if (canShare) {
-        await Sharing.shareAsync(localUri);
+      const { localUri, fileName } = await filesAPI.downloadFile(file.id);
+      
+      if (Platform.OS === 'web') {
+        showSnackbar(`${fileName} downloaded successfully`);
       } else {
-        showSnackbar('File downloaded to: ' + localUri);
+        const canShare = await Sharing.isAvailableAsync();
+        if (canShare) {
+          await Sharing.shareAsync(localUri);
+        } else {
+          showSnackbar('File downloaded to: ' + localUri);
+        }
       }
     } catch (error: any) {
+      console.log(error);
       showSnackbar(
         error.response?.data?.message || 'Failed to download file'
       );

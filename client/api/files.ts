@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import { apiClient } from './config';
 import * as FileSystem from 'expo-file-system';
 
@@ -51,9 +52,11 @@ export const filesAPI = {
 
     const fileUri = `${FileSystem.documentDirectory}${fileName}`;
     
-    await FileSystem.writeAsStringAsync(fileUri, response.data, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
+    if (Platform.OS !== 'web') {
+      await FileSystem.writeAsStringAsync(fileUri, response.data, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+    }
 
     return { localUri: fileUri, fileName };
   },
