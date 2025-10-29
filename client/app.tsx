@@ -33,7 +33,7 @@ const AppContent: React.FC = () => {
 
 export default function App() {
   return (
-    <SafeAreaProvider>
+    <SafeAreaProvider style={styles.safeArea}>
       <PaperProvider theme={theme}>
         <AuthProvider>
           <NavigationContainer>
@@ -47,6 +47,10 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    height: '100%',
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
