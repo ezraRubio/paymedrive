@@ -79,3 +79,5 @@ router.post('/subscription/upgrade', authenticate, async (req: ExtendedRequest, 
     next(error);
   }
 });
+
+export default router;

@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import { initializeDatabase } from './clients/db';
 import { logger } from './utils/logger';
 import userRoutes from './routes/user.routes';
+import subscriptionRoutes from './routes/subscription.routes';
 import fileRoutes from './routes/files.routes';
 import { setupSwagger } from './config/swagger';
 import { errorHandler } from './middleware/error-handler';
@@ -49,6 +50,7 @@ app.get('/health', (_req: Request, res: Response) => {
 
 // API routes
 app.use('/api', userRoutes);
+app.use('/api', subscriptionRoutes);
 app.use('/api', fileRoutes);
 
 // Swagger documentation
