@@ -189,8 +189,8 @@ Create all Sequelize models, relationships, and initial database setup.
    - `server/models/user.model.ts` - User entity
    - `server/models/file.model.ts` - File entity
    - `server/models/subscription.model.ts` - Subscription tiers
-   - `server/models/user-files.model.ts` - Junction table
-   - `server/models/user-subscription.model.ts` - Junction table
+   - `server/models/user.files.model.ts` - Junction table
+   - `server/models/user.subscription.model.ts` - Junction table
 
 3. **Relationships**
    - User hasMany Files (through UserFiles)
@@ -940,4 +940,4 @@ npm start
 
 ---
 
-**Status**: Ready for Phase 3 execution
+**Status**: Ready for Phase 4 execution

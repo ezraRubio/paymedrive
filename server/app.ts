@@ -8,6 +8,7 @@ import userRoutes from './users/routes';
 import fileRoutes from './files/routes';
 import { setupSwagger } from './config/swagger';
 import { errorHandler } from './middleware/error-handler';
+import { generalRateLimit } from './middleware/rate-limit.middleware';
 
 dotenv.config();
 
@@ -20,6 +21,9 @@ app.use(cors({
   origin: process.env.CORS_ORIGIN?.split(',') || '*',
   credentials: true,
 }));
+
+// Rate limiting
+app.use(generalRateLimit);
 
 // Body parsing middleware
 app.use(express.json());
