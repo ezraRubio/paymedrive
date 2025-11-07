@@ -2,12 +2,12 @@
 
 > "You get a **free** drive...if you pay me!"
 
-A file management/backup system with a tier-based subscription model.
+A file management/backup system with a tier-based subscription model.  
 Refer to `paymedrive.md` for non-ai information on system architecture.
-`pmd_architecture.png` shows the user flow on the system.
+`pmd_architecture.png` shows the user flow on the system.  
 See `plan.md` for detailed development plan, and `prompt_history.md`
-for the chat history with cascade (agentic claude sonnet).
-Use test@example.com 123456 for testing.
+for the chat history with cascade (agentic claude sonnet).  
+Use <test@example.com> 123456 for testing.
 
 ## 📋 Features
 
@@ -32,6 +32,7 @@ Use test@example.com 123456 for testing.
 ## 🏗️ Tech Stack
 
 ### Backend
+
 - Node.js + Express + TypeScript
 - SQLite + Sequelize ORM
 - JWT Authentication
@@ -41,17 +42,20 @@ Use test@example.com 123456 for testing.
 - Jest Testing
 
 ### Client
+
 - Expo (React Native)
 - React Native Paper
 - TypeScript
 
 ### Infrastructure
+
 - Docker + Docker Compose
 - Hot-reload development environment
 
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - Docker & Docker Compose
 - Node.js 18+ (for client development)
 - npm or yarn
@@ -59,41 +63,47 @@ Use test@example.com 123456 for testing.
 ### Backend Setup
 
 1. **Clone the repository**
+
    ```bash
    git clone <repository-url>
    cd paymedrive
    ```
 
 2. **Configure environment variables**
+
    ```bash
    cp server/.env.example server/.env
    # Edit server/.env with your configuration
    ```
 
 3. **Start with Docker**
+
    ```bash
    docker-compose up --build
    ```
 
    The backend will be available at:
-   - API: http://localhost:3000
-   - API Docs: http://localhost:3000/api-docs
-   - Health Check: http://localhost:3000/health
+   - API: <http://localhost:3000>
+   - API Docs: <http://localhost:3000/api-docs>
+   - Health Check: <http://localhost:3000/health>
 
 ### Local Development (without Docker)
 
 1. **Install dependencies**
+
    ```bash
    cd server
    npm install
    ```
 
 2. **Run development server**
+
    ```bash
    npm run dev
    ```
 
 3. **Build for production**
+
    ```bash
    npm run build
    npm start
@@ -102,12 +112,14 @@ Use test@example.com 123456 for testing.
 ### Client Setup
 
 1. **Install dependencies**
+
    ```bash
    cd client
    npm install
    ```
 
 2. **Start Expo**
+
    ```bash
    npm start
    ```
@@ -170,16 +182,19 @@ Interactive API documentation is available at `/api-docs` when the server is run
 ### Key Endpoints
 
 **Authentication**
+
 - `POST /api/auth` - Initiate login/signup (sends OTP)
 - `POST /api/otp` - Verify OTP and get JWT token
 
 **Users**
+
 - `GET /api/users` - Get user info (protected)
 - `POST /api/users` - Create new user
 - `DELETE /api/users` - Delete user (protected)
 - `POST /api/subscribe` - Update subscription (protected)
 
 **Files**
+
 - `GET /api/files` - List all user files (protected)
 - `GET /api/file?id={fileId}` - Download file (protected)
 - `POST /api/file` - Upload file (protected)
@@ -196,6 +211,7 @@ Interactive API documentation is available at `/api-docs` when the server is run
 ## 🧪 Testing
 
 Run tests with:
+
 ```bash
 cd server
 npm test
@@ -208,6 +224,7 @@ Coverage report will be generated in `coverage/` directory.
 See `server/.env.example` for all available environment variables.
 
 Key variables:
+
 - `JWT_SECRET` - Secret key for JWT tokens
 - `SMTP_*` - Email configuration for OTP
 - `DB_PATH` - SQLite database location
@@ -223,3 +240,4 @@ Key variables:
 ## 📄 License
 
 MIT
+

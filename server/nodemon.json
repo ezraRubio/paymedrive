@@ -1,7 +1,7 @@
 {
   "watch": ["."],
   "ext": "ts,json",
-  "ignore": ["dist", "node_modules", "**/*.test.ts", "**/*.spec.ts"],
+  "ignore": ["dist", "node_modules", "**/*.test.ts", "**/*.spec.ts", "chunks", "bucket", "data", "logs"],
   "exec": "ts-node app.ts",
   "env": {
     "NODE_ENV": "development"

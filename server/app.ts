@@ -7,6 +7,7 @@ import { logger } from './utils/logger';
 import userRoutes from './routes/user.routes';
 import subscriptionRoutes from './routes/subscription.routes';
 import fileRoutes from './routes/files.routes';
+import chunkUploadRoutes from './routes/chunk.upload.routes';
 import { setupSwagger } from './config/swagger';
 import { errorHandler } from './middleware/error-handler';
 import { generalRateLimit } from './middleware/rate-limit.middleware';
@@ -52,6 +53,7 @@ app.get('/health', (_req: Request, res: Response) => {
 app.use('/api', userRoutes);
 app.use('/api', subscriptionRoutes);
 app.use('/api', fileRoutes);
+app.use('/api', chunkUploadRoutes);
 
 // Swagger documentation
 setupSwagger(app);

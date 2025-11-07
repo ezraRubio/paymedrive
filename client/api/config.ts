@@ -4,10 +4,12 @@ const API_BASE_URL = 'http://localhost:3000/api';
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000,
+  timeout: 300000, // 5 minutes for large file uploads
   headers: {
     'Content-Type': 'application/json',
   },
+  maxContentLength: Infinity,
+  maxBodyLength: Infinity,
 });
 
 export const setAuthToken = (token: string | null) => {

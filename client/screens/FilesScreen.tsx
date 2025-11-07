@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   View,
   StyleSheet,
   FlatList,
   RefreshControl,
   Platform,
-} from 'react-native';
+} from "react-native";
 import {
   FAB,
   List,
@@ -17,10 +17,10 @@ import {
   Portal,
   Dialog,
   Button,
-} from 'react-native-paper';
-import * as DocumentPicker from 'expo-document-picker';
-import * as Sharing from 'expo-sharing';
-import { filesAPI, FileMetadata } from '../api/files';
+} from "react-native-paper";
+import * as Sharing from "expo-sharing";
+import { filesAPI, FileMetadata } from "../api/files";
+import { selectFile, formatFileSize as formatBytes } from "../utils/fileUpload.util";
 
 export const FilesScreen: React.FC = () => {
   const [files, setFiles] = useState<FileMetadata[]>([]);
@@ -28,9 +28,10 @@ export const FilesScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
   const [snackbarVisible, setSnackbarVisible] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarMessage, setSnackbarMessage] = useState("");
   const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
   const [fileToDelete, setFileToDelete] = useState<FileMetadata | null>(null);
 
@@ -41,7 +42,7 @@ export const FilesScreen: React.FC = () => {
   useEffect(() => {
     if (searchQuery) {
       const filtered = files.filter((file) =>
-        file.name.toLowerCase().includes(searchQuery.toLowerCase())
+        file.name.toLowerCase().includes(searchQuery.toLowerCase()),
       );
       setFilteredFiles(filtered);
     } else {
@@ -57,7 +58,7 @@ export const FilesScreen: React.FC = () => {
         setFilteredFiles(response.files);
       }
     } catch (error: any) {
-      showSnackbar(error.response?.data?.message || 'Failed to load files');
+      showSnackbar(error.response?.data?.message || "Failed to load files");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -71,50 +72,51 @@ export const FilesScreen: React.FC = () => {
 
   const handleUpload = async () => {
     try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: '*/*',
-        copyToCacheDirectory: true,
-      });
+      const selectedFile = await selectFile();
+      
+      if (!selectedFile) return;
 
-      if (result.canceled) return;
-
-      const file = result.assets[0].file;
-      if (!file) return;
       setUploading(true);
+      setUploadProgress(0);
 
-      const response = await filesAPI.uploadFile(file);
+      const response = await filesAPI.smartUpload(
+        selectedFile,
+        (progress) => {
+          setUploadProgress(progress.percentage);
+        }
+      );
+      
       if (response.success) {
-        showSnackbar('File uploaded successfully');
+        showSnackbar("File uploaded successfully");
         loadFiles();
       }
     } catch (error: any) {
-      showSnackbar(
-        error.response?.data?.error || 'Failed to upload'
-      );
+      console.error('Upload error:', error);
+      const errorMessage = error.message || error.response?.data?.error || "Failed to upload";
+      showSnackbar(errorMessage);
     } finally {
       setUploading(false);
+      setUploadProgress(0);
     }
   };
 
   const handleDownload = async (file: FileMetadata) => {
     try {
       const { localUri, fileName } = await filesAPI.downloadFile(file.id);
-      
-      if (Platform.OS === 'web') {
+
+      if (Platform.OS === "web") {
         showSnackbar(`${fileName} downloaded successfully`);
       } else {
         const canShare = await Sharing.isAvailableAsync();
         if (canShare) {
           await Sharing.shareAsync(localUri);
         } else {
-          showSnackbar('File downloaded to: ' + localUri);
+          showSnackbar("File downloaded to: " + localUri);
         }
       }
     } catch (error: any) {
       console.log(error);
-      showSnackbar(
-        error.response?.data?.message || 'Failed to download file'
-      );
+      showSnackbar(error.response?.data?.message || "Failed to download file");
     }
   };
 
@@ -131,9 +133,7 @@ export const FilesScreen: React.FC = () => {
       showSnackbar(`"${fileToDelete.name}" deleted successfully`);
       loadFiles();
     } catch (error: any) {
-      showSnackbar(
-        error.response?.data?.message || 'Failed to delete file'
-      );
+      showSnackbar(error.response?.data?.message || "Failed to delete file");
     } finally {
       setDeleteDialogVisible(false);
       setFileToDelete(null);
@@ -150,13 +150,6 @@ export const FilesScreen: React.FC = () => {
     setSnackbarVisible(true);
   };
 
-  const formatBytes = (bytes: number): string => {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
-  };
 
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
@@ -165,21 +158,21 @@ export const FilesScreen: React.FC = () => {
 
   const getFileIcon = (format: string): string => {
     const iconMap: { [key: string]: string } = {
-      pdf: 'file-pdf-box',
-      doc: 'file-word',
-      docx: 'file-word',
-      xls: 'file-excel',
-      xlsx: 'file-excel',
-      ppt: 'file-powerpoint',
-      pptx: 'file-powerpoint',
-      jpg: 'file-image',
-      jpeg: 'file-image',
-      png: 'file-image',
-      gif: 'file-image',
-      zip: 'zip-box',
-      txt: 'file-document',
+      pdf: "file-pdf-box",
+      doc: "file-word",
+      docx: "file-word",
+      xls: "file-excel",
+      xlsx: "file-excel",
+      ppt: "file-powerpoint",
+      pptx: "file-powerpoint",
+      jpg: "file-image",
+      jpeg: "file-image",
+      png: "file-image",
+      gif: "file-image",
+      zip: "zip-box",
+      txt: "file-document",
     };
-    return iconMap[format.toLowerCase()] || 'file';
+    return iconMap[format.toLowerCase()] || "file";
   };
 
   if (loading) {
@@ -203,8 +196,8 @@ export const FilesScreen: React.FC = () => {
         <View style={styles.emptyContainer}>
           <Text variant="bodyLarge" style={styles.emptyText}>
             {searchQuery
-              ? 'No files match your search'
-              : 'No files yet. Upload your first file!'}
+              ? "No files match your search"
+              : "No files yet. Upload your first file!"}
           </Text>
         </View>
       ) : (
@@ -218,7 +211,7 @@ export const FilesScreen: React.FC = () => {
             <List.Item
               title={item.name}
               description={`${formatBytes(item.size)} • ${formatDate(
-                item.createdAt
+                item.createdAt,
               )}`}
               left={(props) => (
                 <List.Icon {...props} icon={getFileIcon(item.format)} />
@@ -241,8 +234,8 @@ export const FilesScreen: React.FC = () => {
       )}
 
       <FAB
-        icon={uploading ? 'loading' : 'plus'}
-        label="Upload"
+        icon={uploading ? "loading" : "plus"}
+        label={uploading ? `${uploadProgress}%` : "Upload"}
         style={styles.fab}
         onPress={handleUpload}
         disabled={uploading}
@@ -280,12 +273,12 @@ export const FilesScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   searchbar: {
     margin: 16,
@@ -293,20 +286,20 @@ const styles = StyleSheet.create({
   },
   emptyContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   emptyText: {
-    textAlign: 'center',
+    textAlign: "center",
     opacity: 0.6,
   },
   actions: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   fab: {
-    position: 'absolute',
+    position: "absolute",
     right: 16,
     bottom: 16,
   },
