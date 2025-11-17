@@ -99,7 +99,11 @@ export class ChunkStorageUtil {
     return metadata.uploadedChunks.length === metadata.totalChunks;
   }
 
-  async assembleChunks(uploadId: string): Promise<Buffer> {
+  /**
+   * Assemble chunks by streaming them directly to the final destination
+   * Uses synchronous file operations in chunks to avoid memory issues
+   */
+  async assembleChunksToFile(uploadId: string, destinationPath: string): Promise<number> {
     const metadata = await this.getMetadata(uploadId);
 
     if (!await this.isUploadComplete(uploadId)) {
@@ -108,29 +112,70 @@ export class ChunkStorageUtil {
       );
     }
 
-    const chunks: Buffer[] = [];
+    let totalBytesWritten = 0;
 
-    for (let i = 0; i < metadata.totalChunks; i++) {
-      const chunkPath = this.getChunkPath(uploadId, i);
+    try {
+      // Open file for writing
+      const fd = await fs.promises.open(destinationPath, 'w');
       
-      if (!fs.existsSync(chunkPath)) {
-        throw new Error(`Chunk ${i} missing for upload ${uploadId}`);
+      try {
+        // Read and write each chunk sequentially
+        for (let i = 0; i < metadata.totalChunks; i++) {
+          const chunkPath = this.getChunkPath(uploadId, i);
+          
+          if (!fs.existsSync(chunkPath)) {
+            throw new Error(`Chunk ${i} missing for upload ${uploadId}`);
+          }
+
+          // Read chunk into buffer (one at a time)
+          const chunkData = await fs.promises.readFile(chunkPath);
+          
+          // Write to destination
+          await fd.write(chunkData, 0, chunkData.length, totalBytesWritten);
+          totalBytesWritten += chunkData.length;
+          
+          // Free the buffer immediately
+          // @ts-ignore - help GC
+          chunkData = null;
+        }
+      } finally {
+        // Always close the file descriptor
+        await fd.close();
       }
 
-      const chunkBuffer = await fs.promises.readFile(chunkPath);
-      chunks.push(chunkBuffer);
-    }
+      if (totalBytesWritten !== metadata.fileSize) {
+        logger.warn(
+          `File size mismatch for ${uploadId}: expected ${metadata.fileSize}, got ${totalBytesWritten}`
+        );
+      }
 
-    const assembledBuffer = Buffer.concat(chunks);
+      logger.info(`Assembled ${metadata.totalChunks} chunks for upload ${uploadId} to ${destinationPath} (${totalBytesWritten} bytes)`);
+      return totalBytesWritten;
+    } catch (error) {
+      // Clean up on error
+      if (fs.existsSync(destinationPath)) {
+        try {
+          await fs.promises.unlink(destinationPath);
+        } catch (e) {
+          // Ignore cleanup errors
+        }
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Legacy method for backward compatibility - loads entire file into memory
+   * @deprecated Use assembleChunksToFile instead for better memory efficiency
+   */
+  async assembleChunks(uploadId: string): Promise<Buffer> {
+    const tempPath = path.join(this.getUploadDirectory(uploadId), 'temp_assembled');
     
-    if (assembledBuffer.length !== metadata.fileSize) {
-      logger.warn(
-        `File size mismatch for ${uploadId}: expected ${metadata.fileSize}, got ${assembledBuffer.length}`
-      );
-    }
-
-    logger.info(`Assembled ${metadata.totalChunks} chunks for upload ${uploadId}`);
-    return assembledBuffer;
+    await this.assembleChunksToFile(uploadId, tempPath);
+    const buffer = await fs.promises.readFile(tempPath);
+    await fs.promises.unlink(tempPath);
+    
+    return buffer;
   }
 
   async cleanupUpload(uploadId: string): Promise<void> {

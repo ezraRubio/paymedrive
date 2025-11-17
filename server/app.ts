@@ -11,6 +11,7 @@ import chunkUploadRoutes from './routes/chunk.upload.routes';
 import { setupSwagger } from './config/swagger';
 import { errorHandler } from './middleware/error-handler';
 import { generalRateLimit } from './middleware/rate-limit.middleware';
+import { memoryMonitor, getMemoryStats } from './middleware/memory-monitor.middleware';
 
 dotenv.config();
 
@@ -27,6 +28,9 @@ app.use(cors({
 // Rate limiting
 app.use(generalRateLimit);
 
+// Memory monitoring
+app.use(memoryMonitor);
+
 // Body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -42,10 +46,12 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
 
 // Health check endpoint
 app.get('/health', (_req: Request, res: Response) => {
+  const memoryStats = getMemoryStats();
   res.status(200).json({
     status: 'ok',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
+    memory: memoryStats,
   });
 });
 
