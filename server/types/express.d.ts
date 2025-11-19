@@ -8,6 +8,13 @@ declare global {
         email: string;
         tier: string;
       };
+      body: {
+        email?: unknown;
+        otp?: unknown;
+        name?: unknown;
+        tier?: unknown;
+        [key: string]: unknown;
+      };
     }
   }
 }

@@ -4,7 +4,7 @@ import { UserTier } from '../models/user.model';
 export class UserRepository {
   async findById(id: string, includeDeleted = false): Promise<User | null> {
     const whereClause = includeDeleted ? { id } : { id, isDeleted: false };
-    
+
     return await User.findOne({
       where: whereClause,
       include: [
@@ -19,7 +19,7 @@ export class UserRepository {
 
   async findByEmail(email: string, includeDeleted = false): Promise<User | null> {
     const whereClause = includeDeleted ? { email } : { email, isDeleted: false };
-    
+
     return await User.findOne({
       where: whereClause,
       include: [
@@ -90,6 +90,9 @@ export class UserRepository {
       attributes: ['size'],
     });
 
-    return files.reduce((total: number, file: any) => total + file.size, 0);
+    return files.reduce((total: number, file) => {
+      const fileData = file.get({ plain: true }) as { size: number };
+      return total + fileData.size;
+    }, 0);
   }
 }

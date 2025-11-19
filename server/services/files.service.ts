@@ -36,7 +36,7 @@ export class FileService {
       const quotaCheck = await canUploadFile(userId, file.size);
 
       if (!quotaCheck.allowed) {
-        throw new ApiError(403, quotaCheck.reason || 'Quota exceeded');
+        throw new ApiError(403, quotaCheck.reason ?? 'Quota exceeded');
       }
 
       const location = generateFileLocation(userId, file.originalname);
@@ -69,7 +69,10 @@ export class FileService {
     }
   }
 
-  async getFileById(userId: string, fileId: string): Promise<{
+  async getFileById(
+    userId: string,
+    fileId: string
+  ): Promise<{
     file: Buffer;
     name: string;
     format: string;
@@ -137,7 +140,10 @@ export class FileService {
     }
   }
 
-  async deleteFile(userId: string, fileId: string): Promise<{
+  async deleteFile(
+    userId: string,
+    fileId: string
+  ): Promise<{
     success: boolean;
     message: string;
   }> {
@@ -173,7 +179,10 @@ export class FileService {
     }
   }
 
-  async getFileMetadata(userId: string, fileId: string): Promise<{
+  async getFileMetadata(
+    userId: string,
+    fileId: string
+  ): Promise<{
     id: string;
     name: string;
     size: number;

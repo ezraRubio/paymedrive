@@ -3,7 +3,7 @@ import { logger } from '../utils/logger';
 import path from 'path';
 import fs from 'fs';
 
-let sequelize: Sequelize;
+let sequelize: Sequelize | undefined;
 
 export const initializeDatabase = async (): Promise<void> => {
   const dbPath = process.env.DB_PATH || './data/database.sqlite';
@@ -23,16 +23,15 @@ export const initializeDatabase = async (): Promise<void> => {
   try {
     await sequelize.authenticate();
     logger.info('Database connection established successfully');
-    
+
     const { initializeModels } = await import('../models');
     initializeModels();
-    
+
     await sequelize.sync({ alter: process.env.NODE_ENV === 'development' });
     logger.info('Database models synchronized');
-    
+
     const { seedSubscriptions } = await import('../seeders/subscription-seeder');
     await seedSubscriptions();
-    
   } catch (error) {
     logger.error('Unable to connect to database:', error);
     throw error;

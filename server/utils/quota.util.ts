@@ -35,7 +35,7 @@ export const canUploadFile = async (
   fileSize: number
 ): Promise<{ allowed: boolean; reason?: string }> => {
   const user = await userRepo.findById(userId);
-  
+
   if (!user) {
     return { allowed: false, reason: 'User not found' };
   }
@@ -66,7 +66,7 @@ export const canUploadFile = async (
 
 export const getRemainingQuota = async (userId: string): Promise<QuotaInfo> => {
   const user = await userRepo.findById(userId);
-  
+
   if (!user) {
     throw new Error('User not found');
   }
@@ -86,10 +86,9 @@ export const getRemainingQuota = async (userId: string): Promise<QuotaInfo> => {
       size: limits.limitSize,
     },
     remaining: {
-      items: isUnlimited ? null : limits.limitItems ? limits.limitItems - itemCount : null,
-      size: isUnlimited ? null : limits.limitSize ? limits.limitSize - totalSize : null,
+      items: isUnlimited ? null : limits.limitItems !== null ? limits.limitItems - itemCount : null,
+      size: isUnlimited ? null : limits.limitSize !== null ? limits.limitSize - totalSize : null,
     },
     isUnlimited,
   };
 };
-

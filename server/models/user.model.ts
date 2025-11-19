@@ -1,4 +1,4 @@
-import { DataTypes, Model, Optional } from 'sequelize';
+import { DataTypes, FindOptions, Model, Optional } from 'sequelize';
 import { getSequelize } from '../clients/db';
 
 export enum UserTier {
@@ -19,7 +19,11 @@ interface UserAttributes {
   modifyAt: Date;
 }
 
-interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'tier' | 'isAdmin' | 'accessToken' | 'isDeleted' | 'createdAt' | 'modifyAt'> {}
+interface UserCreationAttributes
+  extends Optional<
+    UserAttributes,
+    'id' | 'tier' | 'isAdmin' | 'accessToken' | 'isDeleted' | 'createdAt' | 'modifyAt'
+  > {}
 
 export class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
   declare id: string;
@@ -33,10 +37,10 @@ export class User extends Model<UserAttributes, UserCreationAttributes> implemen
   declare modifyAt: Date;
 
   // Association methods (added by Sequelize)
-  declare getFiles: (options?: any) => Promise<any[]>;
-  declare countFiles: (options?: any) => Promise<number>;
-  declare addFile: (file: any, options?: any) => Promise<void>;
-  declare removeFile: (file: any, options?: any) => Promise<void>;
+  declare getFiles: <M extends Model = Model>(options?: FindOptions) => Promise<M[]>;
+  declare countFiles: (options?: FindOptions) => Promise<number>;
+  declare addFile: (file: string | Model, options?: FindOptions) => Promise<void>;
+  declare removeFile: (file: string | Model, options?: FindOptions) => Promise<void>;
 }
 
 export const initUserModel = () => {

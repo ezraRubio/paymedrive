@@ -46,8 +46,14 @@ export const verifyToken = (token: string): JWTPayload | null => {
 
 export const decodeToken = (token: string): JWTPayload | null => {
   try {
-    const decoded = jwt.decode(token) as JWTPayload;
-    return decoded;
+    const decoded = jwt.decode(token);
+    if (!decoded || typeof decoded === 'string') {
+      return null;
+    }
+    if ('userId' in decoded && 'email' in decoded && 'tier' in decoded) {
+      return decoded as JWTPayload;
+    }
+    return null;
   } catch (error) {
     logger.error('Error decoding JWT:', error);
     return null;

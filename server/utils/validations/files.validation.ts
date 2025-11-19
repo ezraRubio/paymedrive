@@ -14,7 +14,7 @@ export const fileIdSchema = Joi.object({
 });
 
 export const validate = (schema: Joi.ObjectSchema) => {
-  return (data: any) => {
+  return <T = unknown>(data: T) => {
     const { error, value } = schema.validate(data, {
       abortEarly: false,
       stripUnknown: true,

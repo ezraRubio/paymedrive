@@ -23,25 +23,29 @@ const fileService = new FileService();
  *       401:
  *         description: Unauthorized
  */
-router.get('/files', authenticate, async (req: ExtendedRequest, res: Response, next: NextFunction) => {
-  try {
-    const userId = req.user?.userId;
+router.get(
+  '/files',
+  authenticate,
+  async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user?.userId;
 
-    if (!userId) {
-      throw new ApiError(401, 'User not authenticated');
+      if (!userId) {
+        throw new ApiError(401, 'User not authenticated');
+      }
+
+      const files = await fileService.listUserFiles(userId);
+
+      res.status(200).json({
+        success: true,
+        count: files.length,
+        files,
+      });
+    } catch (error) {
+      next(error);
     }
-
-    const files = await fileService.listUserFiles(userId);
-
-    res.status(200).json({
-      success: true,
-      count: files.length,
-      files,
-    });
-  } catch (error) {
-    next(error);
   }
-});
+);
 
 /**
  * @swagger
@@ -97,7 +101,7 @@ router.post(
         file: result,
       });
     } catch (error) {
-      if (error && typeof error === 'object' && 'code' in error) {
+      if (error instanceof Error) {
         const multerError = handleMulterError(error);
         next(new ApiError(400, multerError));
       } else {
@@ -138,26 +142,30 @@ router.post(
  *       404:
  *         description: File not found
  */
-router.get('/file', authenticate, async (req: ExtendedRequest, res: Response, next: NextFunction) => {
-  try {
-    const userId = req.user?.userId;
+router.get(
+  '/file',
+  authenticate,
+  async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user?.userId;
 
-    if (!userId) {
-      throw new ApiError(401, 'User not authenticated');
+      if (!userId) {
+        throw new ApiError(401, 'User not authenticated');
+      }
+
+      const validatedData = validate(fileIdSchema)(req.query);
+      const result = await fileService.getFileById(userId, validatedData.id);
+
+      res.setHeader('Content-Type', 'application/octet-stream');
+      res.setHeader('Content-Disposition', `attachment; filename="${result.name}"`);
+      res.setHeader('Content-Length', result.size);
+
+      res.send(result.file);
+    } catch (error) {
+      next(error);
     }
-
-    const validatedData = validate(fileIdSchema)(req.query);
-    const result = await fileService.getFileById(userId, validatedData.id);
-
-    res.setHeader('Content-Type', 'application/octet-stream');
-    res.setHeader('Content-Disposition', `attachment; filename="${result.name}"`);
-    res.setHeader('Content-Length', result.size);
-
-    res.send(result.file);
-  } catch (error) {
-    next(error);
   }
-});
+);
 
 /**
  * @swagger
@@ -185,25 +193,29 @@ router.get('/file', authenticate, async (req: ExtendedRequest, res: Response, ne
  *       404:
  *         description: File not found
  */
-router.get('/file/metadata', authenticate, async (req: ExtendedRequest, res: Response, next: NextFunction) => {
-  try {
-    const userId = req.user?.userId;
+router.get(
+  '/file/metadata',
+  authenticate,
+  async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user?.userId;
 
-    if (!userId) {
-      throw new ApiError(401, 'User not authenticated');
+      if (!userId) {
+        throw new ApiError(401, 'User not authenticated');
+      }
+
+      const validatedData = validate(fileIdSchema)(req.query);
+      const metadata = await fileService.getFileMetadata(userId, validatedData.id);
+
+      res.status(200).json({
+        success: true,
+        file: metadata,
+      });
+    } catch (error) {
+      next(error);
     }
-
-    const validatedData = validate(fileIdSchema)(req.query);
-    const metadata = await fileService.getFileMetadata(userId, validatedData.id);
-
-    res.status(200).json({
-      success: true,
-      file: metadata,
-    });
-  } catch (error) {
-    next(error);
   }
-});
+);
 
 /**
  * @swagger
@@ -231,21 +243,25 @@ router.get('/file/metadata', authenticate, async (req: ExtendedRequest, res: Res
  *       404:
  *         description: File not found
  */
-router.delete('/file', authenticate, async (req: ExtendedRequest, res: Response, next: NextFunction) => {
-  try {
-    const userId = req.user?.userId;
+router.delete(
+  '/file',
+  authenticate,
+  async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user?.userId;
 
-    if (!userId) {
-      throw new ApiError(401, 'User not authenticated');
+      if (!userId) {
+        throw new ApiError(401, 'User not authenticated');
+      }
+
+      const validatedData = validate(fileIdSchema)(req.query);
+      const result = await fileService.deleteFile(userId, validatedData.id);
+
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
     }
-
-    const validatedData = validate(fileIdSchema)(req.query);
-    const result = await fileService.deleteFile(userId, validatedData.id);
-
-    res.status(200).json(result);
-  } catch (error) {
-    next(error);
   }
-});
+);
 
 export default router;

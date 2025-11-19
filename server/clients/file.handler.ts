@@ -7,16 +7,11 @@ const MAX_FILE_SIZE = parseInt(process.env.MAX_FILE_SIZE || '104857600');
 
 const storage = multer.memoryStorage();
 
-const fileFilter = (
-  _req: Request,
-  file: Express.Multer.File,
-  cb: multer.FileFilterCallback
-) => {
-  console.log(_req, file)
+const fileFilter = (_req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   const sanitized = sanitizeFilename(file.originalname);
   file.originalname = sanitized;
 
-  logger.info(`File upload initiated: ${file.originalname}, size: ${file.size}`);
+  logger.info(`File upload initiated: ${file.originalname}, size: ${file.size ?? 'unknown'}`);
   cb(null, true);
 };
 
@@ -28,7 +23,7 @@ export const upload = multer({
   fileFilter,
 });
 
-export const handleMulterError = (error: any): string => {
+export const handleMulterError = (error: Error | multer.MulterError): string => {
   if (error instanceof multer.MulterError) {
     switch (error.code) {
       case 'LIMIT_FILE_SIZE':
@@ -40,6 +35,9 @@ export const handleMulterError = (error: any): string => {
       default:
         return `Upload error: ${error.message}`;
     }
+  }
+  if (error instanceof Error) {
+    return `Upload error: ${error.message}`;
   }
   return 'File upload failed';
 };

@@ -52,7 +52,13 @@ export class AuthService {
     success: boolean;
     message: string;
     token?: string;
-    user?: any;
+    user?: {
+      id: string;
+      name: string;
+      email: string;
+      tier: UserTier;
+      isAdmin: boolean;
+    };
   }> {
     try {
       const normalizedEmail = email.toLowerCase().trim();
@@ -75,7 +81,7 @@ export class AuthService {
 
       if (!user) {
         user = await userRepo.create({
-          name: name || normalizedEmail, 
+          name: name || normalizedEmail,
           email: normalizedEmail,
           tier: UserTier.FREE,
         });

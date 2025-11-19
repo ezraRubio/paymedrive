@@ -1,4 +1,4 @@
-import { DataTypes, Model, Optional } from 'sequelize';
+import { DataTypes, FindOptions, Model, Optional } from 'sequelize';
 import { getSequelize } from '../clients/db';
 
 interface FileAttributes {
@@ -12,7 +12,8 @@ interface FileAttributes {
   modifyAt: Date;
 }
 
-interface FileCreationAttributes extends Optional<FileAttributes, 'id' | 'isDeleted' | 'createdAt' | 'modifyAt'> {}
+interface FileCreationAttributes
+  extends Optional<FileAttributes, 'id' | 'isDeleted' | 'createdAt' | 'modifyAt'> {}
 
 export class File extends Model<FileAttributes, FileCreationAttributes> implements FileAttributes {
   declare id: string;
@@ -25,9 +26,9 @@ export class File extends Model<FileAttributes, FileCreationAttributes> implemen
   declare modifyAt: Date;
 
   // Association methods (added by Sequelize)
-  declare getUsers: (options?: any) => Promise<any[]>;
-  declare addUser: (user: any, options?: any) => Promise<void>;
-  declare removeUser: (user: any, options?: any) => Promise<void>;
+  declare getUsers: <M extends Model = Model>(options?: FindOptions) => Promise<M[]>;
+  declare addUser: (user: string | Model, options?: FindOptions) => Promise<void>;
+  declare removeUser: (user: string | Model, options?: FindOptions) => Promise<void>;
 }
 
 export const initFileModel = () => {

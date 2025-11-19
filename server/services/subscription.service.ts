@@ -38,11 +38,7 @@ export class SubscriptionManagerService {
           throw new ApiError(400, 'Invalid tier');
         }
 
-        const paymentResult = await paymentService.processPayment(
-          userId,
-          newTier,
-          price.price
-        );
+        const paymentResult = await paymentService.processPayment(userId, newTier, price.price);
 
         if (!paymentResult.success) {
           throw new ApiError(402, paymentResult.message);
@@ -71,15 +67,15 @@ export class SubscriptionManagerService {
   async getAvailableTiers() {
     const subscriptions = await subscriptionService.getAllSubscriptions();
     const prices = paymentService.getAllPrices();
-    
+
     return subscriptions.map((sub) => {
       const priceInfo = prices.find((p) => p.tier === sub.tier);
-      
+
       return {
         tier: sub.tier,
-        price: priceInfo?.price || 0,
-        currency: priceInfo?.currency || 'USD',
-        billingPeriod: priceInfo?.billingPeriod || 'lifetime',
+        price: priceInfo?.price ?? 0,
+        currency: priceInfo?.currency ?? 'USD',
+        billingPeriod: priceInfo?.billingPeriod ?? 'lifetime',
         limitSize: sub.limitSize,
         limitItems: sub.limitItems,
       };
@@ -99,8 +95,8 @@ export class SubscriptionManagerService {
 
       const isCompliant =
         quota.isUnlimited ||
-        (quota.used.items <= (limits.limitItems || Infinity) &&
-          quota.used.size <= (limits.limitSize || Infinity));
+        (quota.used.items <= (limits.limitItems ?? Infinity) &&
+          quota.used.size <= (limits.limitSize ?? Infinity));
 
       return {
         isCompliant,
@@ -113,13 +109,8 @@ export class SubscriptionManagerService {
           ? null
           : {
               items:
-                limits.limitItems !== null
-                  ? Math.max(0, quota.used.items - limits.limitItems)
-                  : 0,
-              size:
-                limits.limitSize !== null
-                  ? Math.max(0, quota.used.size - limits.limitSize)
-                  : 0,
+                limits.limitItems !== null ? Math.max(0, quota.used.items - limits.limitItems) : 0,
+              size: limits.limitSize !== null ? Math.max(0, quota.used.size - limits.limitSize) : 0,
             },
       };
     } catch (error) {
