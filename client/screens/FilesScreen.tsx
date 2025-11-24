@@ -88,10 +88,33 @@ export const FilesScreen: React.FC = () => {
   };
 
   const handleUpload = async () => {
+    if (Platform.OS === 'web') {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.onchange = async (e: any) => {
+        const file = e.target.files[0];
+        if (file) {
+          // Create a blob URI for the interface (UploadManager uses the File object directly on Web)
+          const fileUri = URL.createObjectURL(file);
+
+          await uploadManager.addToQueue(
+            fileUri,
+            file.name,
+            file.size,
+            file.type || 'application/octet-stream',
+            file
+          );
+          showSnackbar('Added to upload queue');
+        }
+      };
+      input.click();
+      return;
+    }
+
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: '*/*',
-        copyToCacheDirectory: true, // Important for reading chunks
+        copyToCacheDirectory: true,
       });
 
       if (result.canceled) return;
@@ -99,24 +122,20 @@ export const FilesScreen: React.FC = () => {
       const file = result.assets[0];
       if (!file) return;
 
-      // On Web, the file object is available in `file.file` (if using expo-document-picker) 
-      // or we might need to check the structure.
-      // Actually, expo-document-picker assets have a `file` property on Web which is the File object.
-      // Let's check if it exists.
-      const fileObj = Platform.OS === 'web' ? (file as any).file : undefined;
-
       // Add to upload queue
       await uploadManager.addToQueue(
         file.uri,
         file.name,
         file.size ?? 0,
-        file.mimeType ?? 'application/octet-stream',
-        fileObj
+        file.mimeType ?? 'application/octet-stream'
       );
 
       showSnackbar('Added to upload queue');
 
     } catch (error: any) {
+      if (error.message === 'Download cancelled') {
+        return;
+      }
       showSnackbar(
         error.message || 'Failed to pick file'
       );
@@ -138,7 +157,6 @@ export const FilesScreen: React.FC = () => {
         }
       }
     } catch (error: any) {
-      console.log(error);
       showSnackbar(
         error.response?.data?.message || 'Failed to download file'
       );

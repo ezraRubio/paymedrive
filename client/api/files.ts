@@ -63,6 +63,29 @@ export const filesAPI = {
       const baseURL = apiClient.defaults.baseURL || 'http://localhost:3000/api';
       const url = `${baseURL}/file?id=${fileId}&token=${token}`;
 
+      // Try using File System Access API (Chrome/Edge/Opera)
+      if ('showSaveFilePicker' in window) {
+        try {
+          const handle = await (window as any).showSaveFilePicker({
+            suggestedName: knownFileName || `file_${fileId}`,
+          });
+
+          const writable = await handle.createWritable();
+          const response = await fetch(url);
+
+          if (!response.body) throw new Error('No response body');
+
+          await response.body.pipeTo(writable);
+          return { localUri: url, fileName: knownFileName || `file_${fileId}` };
+        } catch (err: any) {
+          // If user cancelled, rethrow or handle
+          if (err.name === 'AbortError') throw new Error('Download cancelled');
+          console.warn('File System Access API failed, falling back to direct link:', err);
+          // Fallback below
+        }
+      }
+
+      // Fallback for Firefox/Safari or if API failed
       const link = document.createElement('a');
       link.href = url;
       // We can try to set download attribute, but for cross-origin it might be ignored.
