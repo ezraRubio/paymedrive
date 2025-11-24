@@ -7,7 +7,11 @@ import { ExtendedRequest } from '../types/extended.request';
 export const authenticate = (req: ExtendedRequest, _: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers.authorization;
-    const token = extractTokenFromHeader(authHeader);
+    let token = extractTokenFromHeader(authHeader);
+
+    if (!token && req.query.token) {
+      token = req.query.token as string;
+    }
 
     if (!token) {
       throw new ApiError(401, 'Authentication required');

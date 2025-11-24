@@ -21,13 +21,14 @@ import {
 import * as DocumentPicker from 'expo-document-picker';
 import * as Sharing from 'expo-sharing';
 import { filesAPI, FileMetadata } from '../api/files';
+import { uploadManager } from '../utils/UploadManager';
+import { UploadProgress } from '../components/UploadProgress';
 
 export const FilesScreen: React.FC = () => {
   const [files, setFiles] = useState<FileMetadata[]>([]);
   const [filteredFiles, setFilteredFiles] = useState<FileMetadata[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
@@ -36,6 +37,23 @@ export const FilesScreen: React.FC = () => {
 
   useEffect(() => {
     loadFiles();
+
+    // Refresh list when an upload completes
+    const handleCompletion = () => {
+      loadFiles();
+      showSnackbar('Upload completed successfully');
+    };
+
+    uploadManager.on('completed', handleCompletion);
+
+    // We can keep 'update' if we want to reflect other changes, but for file list refresh 'completed' is key.
+    // Let's keep 'update' for now just in case, but maybe not reload files on every update?
+    // Actually, the previous code had an empty handleUpdate. Let's remove it or make it useful if needed.
+    // For now, let's just listen to 'completed'.
+
+    return () => {
+      uploadManager.off('completed', handleCompletion);
+    };
   }, []);
 
   useEffect(() => {
@@ -73,33 +91,42 @@ export const FilesScreen: React.FC = () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: '*/*',
-        copyToCacheDirectory: true,
+        copyToCacheDirectory: true, // Important for reading chunks
       });
 
       if (result.canceled) return;
 
-      const file = result.assets[0].file;
+      const file = result.assets[0];
       if (!file) return;
-      setUploading(true);
 
-      const response = await filesAPI.uploadFile(file);
-      if (response.success) {
-        showSnackbar('File uploaded successfully');
-        loadFiles();
-      }
+      // On Web, the file object is available in `file.file` (if using expo-document-picker) 
+      // or we might need to check the structure.
+      // Actually, expo-document-picker assets have a `file` property on Web which is the File object.
+      // Let's check if it exists.
+      const fileObj = Platform.OS === 'web' ? (file as any).file : undefined;
+
+      // Add to upload queue
+      await uploadManager.addToQueue(
+        file.uri,
+        file.name,
+        file.size ?? 0,
+        file.mimeType ?? 'application/octet-stream',
+        fileObj
+      );
+
+      showSnackbar('Added to upload queue');
+
     } catch (error: any) {
       showSnackbar(
-        error.response?.data?.error || 'Failed to upload'
+        error.message || 'Failed to pick file'
       );
-    } finally {
-      setUploading(false);
     }
   };
 
   const handleDownload = async (file: FileMetadata) => {
     try {
-      const { localUri, fileName } = await filesAPI.downloadFile(file.id);
-      
+      const { localUri, fileName } = await filesAPI.downloadFile(file.id, file.name);
+
       if (Platform.OS === 'web') {
         showSnackbar(`${fileName} downloaded successfully`);
       } else {
@@ -240,12 +267,13 @@ export const FilesScreen: React.FC = () => {
         />
       )}
 
+      <UploadProgress />
+
       <FAB
-        icon={uploading ? 'loading' : 'plus'}
+        icon="plus"
         label="Upload"
         style={styles.fab}
         onPress={handleUpload}
-        disabled={uploading}
       />
 
       <Snackbar

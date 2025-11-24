@@ -3,6 +3,7 @@ import { File, initFileModel } from './file.model';
 import { Subscription, initSubscriptionModel } from './subscription.model';
 import { UserFiles, initUserFilesModel } from './user.files.model';
 import { UserSubscription, initUserSubscriptionModel } from './user.subscription.model';
+import { UploadSession, initUploadSessionModel } from './upload.session.model';
 import { logger } from '../utils/logger';
 
 export const initializeModels = () => {
@@ -13,6 +14,7 @@ export const initializeModels = () => {
   initSubscriptionModel();
   initUserFilesModel();
   initUserSubscriptionModel();
+  initUploadSessionModel();
 
   setupAssociations();
 
@@ -52,7 +54,18 @@ const setupAssociations = () => {
     as: 'users',
   });
 
+  // User hasMany UploadSessions
+  User.hasMany(UploadSession, {
+    foreignKey: 'userId',
+    as: 'uploadSessions',
+  });
+
+  UploadSession.belongsTo(User, {
+    foreignKey: 'userId',
+    as: 'user',
+  });
+
   logger.info('Model associations established');
 };
 
-export { User, File, Subscription, UserFiles, UserSubscription };
+export { User, File, Subscription, UserFiles, UserSubscription, UploadSession };

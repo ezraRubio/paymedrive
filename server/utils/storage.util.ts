@@ -4,11 +4,16 @@ import { logger } from './logger';
 import crypto from 'crypto';
 
 const BUCKET_PATH = process.env.BUCKET_PATH || './bucket';
+const CHUNKS_PATH = path.join(BUCKET_PATH, 'chunks');
 
 export const ensureBucketExists = (): void => {
   if (!fs.existsSync(BUCKET_PATH)) {
     fs.mkdirSync(BUCKET_PATH, { recursive: true });
     logger.info(`Bucket directory created: ${BUCKET_PATH}`);
+  }
+  if (!fs.existsSync(CHUNKS_PATH)) {
+    fs.mkdirSync(CHUNKS_PATH, { recursive: true });
+    logger.info(`Chunks directory created: ${CHUNKS_PATH}`);
   }
 };
 
@@ -18,6 +23,65 @@ export const generateFileLocation = (userId: string, originalName: string): stri
   const ext = path.extname(originalName);
   const filename = `${userId}_${timestamp}_${random}${ext}`;
   return path.join(BUCKET_PATH, filename);
+};
+
+export const getChunkPath = (sessionId: string, index: number): string => {
+  return path.join(CHUNKS_PATH, `${sessionId}_${index}`);
+};
+
+export const saveChunk = async (sessionId: string, index: number, buffer: Buffer): Promise<void> => {
+  const chunkPath = getChunkPath(sessionId, index);
+  return new Promise((resolve, reject) => {
+    fs.writeFile(chunkPath, buffer, (err) => {
+      if (err) {
+        logger.error(`Error saving chunk ${index} for session ${sessionId}:`, err);
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  });
+};
+
+export const mergeChunks = async (
+  sessionId: string,
+  totalChunks: number,
+  finalLocation: string
+): Promise<void> => {
+  const writeStream = fs.createWriteStream(finalLocation);
+
+  for (let i = 0; i < totalChunks; i++) {
+    const chunkPath = getChunkPath(sessionId, i);
+    if (!fs.existsSync(chunkPath)) {
+      throw new Error(`Chunk ${i} missing for session ${sessionId}`);
+    }
+
+    const chunkBuffer = await readFile(chunkPath);
+    writeStream.write(chunkBuffer);
+  }
+
+  writeStream.end();
+
+  return new Promise((resolve, reject) => {
+    writeStream.on('finish', async () => {
+      // Clean up chunks after successful merge
+      await deleteChunks(sessionId, totalChunks);
+      resolve();
+    });
+    writeStream.on('error', (err) => {
+      logger.error(`Error merging chunks for session ${sessionId}:`, err);
+      reject(err);
+    });
+  });
+};
+
+export const deleteChunks = async (sessionId: string, totalChunks: number): Promise<void> => {
+  for (let i = 0; i < totalChunks; i++) {
+    const chunkPath = getChunkPath(sessionId, i);
+    if (fs.existsSync(chunkPath)) {
+      fs.unlinkSync(chunkPath);
+    }
+  }
 };
 
 export const saveFile = async (buffer: Buffer, location: string): Promise<void> => {
