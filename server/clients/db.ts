@@ -27,7 +27,7 @@ export const initializeDatabase = async (): Promise<void> => {
     const { initializeModels } = await import('../models');
     initializeModels();
 
-    await sequelize.sync({ alter: process.env.NODE_ENV === 'development' });
+    await sequelize.sync();
     logger.info('Database models synchronized');
 
     const { seedSubscriptions } = await import('../seeders/subscription-seeder');

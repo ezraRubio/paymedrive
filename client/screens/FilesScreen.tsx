@@ -21,13 +21,14 @@ import {
 import * as DocumentPicker from 'expo-document-picker';
 import * as Sharing from 'expo-sharing';
 import { filesAPI, FileMetadata } from '../api/files';
+import { uploadManager } from '../utils/UploadManager';
+import { UploadProgress } from '../components/UploadProgress';
 
 export const FilesScreen: React.FC = () => {
   const [files, setFiles] = useState<FileMetadata[]>([]);
   const [filteredFiles, setFilteredFiles] = useState<FileMetadata[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
@@ -36,6 +37,23 @@ export const FilesScreen: React.FC = () => {
 
   useEffect(() => {
     loadFiles();
+
+    // Refresh list when an upload completes
+    const handleCompletion = () => {
+      loadFiles();
+      showSnackbar('Upload completed successfully');
+    };
+
+    uploadManager.on('completed', handleCompletion);
+
+    // We can keep 'update' if we want to reflect other changes, but for file list refresh 'completed' is key.
+    // Let's keep 'update' for now just in case, but maybe not reload files on every update?
+    // Actually, the previous code had an empty handleUpdate. Let's remove it or make it useful if needed.
+    // For now, let's just listen to 'completed'.
+
+    return () => {
+      uploadManager.off('completed', handleCompletion);
+    };
   }, []);
 
   useEffect(() => {
@@ -70,6 +88,29 @@ export const FilesScreen: React.FC = () => {
   };
 
   const handleUpload = async () => {
+    if (Platform.OS === 'web') {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.onchange = async (e: any) => {
+        const file = e.target.files[0];
+        if (file) {
+          // Create a blob URI for the interface (UploadManager uses the File object directly on Web)
+          const fileUri = URL.createObjectURL(file);
+
+          await uploadManager.addToQueue(
+            fileUri,
+            file.name,
+            file.size,
+            file.type || 'application/octet-stream',
+            file
+          );
+          showSnackbar('Added to upload queue');
+        }
+      };
+      input.click();
+      return;
+    }
+
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: '*/*',
@@ -78,28 +119,33 @@ export const FilesScreen: React.FC = () => {
 
       if (result.canceled) return;
 
-      const file = result.assets[0].file;
+      const file = result.assets[0];
       if (!file) return;
-      setUploading(true);
 
-      const response = await filesAPI.uploadFile(file);
-      if (response.success) {
-        showSnackbar('File uploaded successfully');
-        loadFiles();
-      }
-    } catch (error: any) {
-      showSnackbar(
-        error.response?.data?.error || 'Failed to upload'
+      // Add to upload queue
+      await uploadManager.addToQueue(
+        file.uri,
+        file.name,
+        file.size ?? 0,
+        file.mimeType ?? 'application/octet-stream'
       );
-    } finally {
-      setUploading(false);
+
+      showSnackbar('Added to upload queue');
+
+    } catch (error: any) {
+      if (error.message === 'Download cancelled') {
+        return;
+      }
+      showSnackbar(
+        error.message || 'Failed to pick file'
+      );
     }
   };
 
   const handleDownload = async (file: FileMetadata) => {
     try {
-      const { localUri, fileName } = await filesAPI.downloadFile(file.id);
-      
+      const { localUri, fileName } = await filesAPI.downloadFile(file.id, file.name);
+
       if (Platform.OS === 'web') {
         showSnackbar(`${fileName} downloaded successfully`);
       } else {
@@ -111,7 +157,6 @@ export const FilesScreen: React.FC = () => {
         }
       }
     } catch (error: any) {
-      console.log(error);
       showSnackbar(
         error.response?.data?.message || 'Failed to download file'
       );
@@ -240,12 +285,13 @@ export const FilesScreen: React.FC = () => {
         />
       )}
 
+      <UploadProgress />
+
       <FAB
-        icon={uploading ? 'loading' : 'plus'}
+        icon="plus"
         label="Upload"
         style={styles.fab}
         onPress={handleUpload}
-        disabled={uploading}
       />
 
       <Snackbar
